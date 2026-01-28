@@ -2,17 +2,22 @@
 
 namespace RyanChandler\FilamentNavigation\Filament\Resources;
 
-use Filament\Forms\Components\Group;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\EditAction;
 use Filament\Forms\Components\Placeholder;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\View;
+
 use Filament\Forms\Components\ViewField;
-use Filament\Forms\Form;
-use Filament\Forms\Set;
+
+
 use Filament\Resources\Resource;
-use Filament\Tables\Actions\DeleteAction;
-use Filament\Tables\Actions\EditAction;
+
+
+use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Components\View;
+use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
@@ -22,7 +27,7 @@ use RyanChandler\FilamentNavigation\Models\Navigation;
 
 class NavigationResource extends Resource
 {
-    protected static ?string $navigationIcon = 'heroicon-o-bars-3';
+    protected static string|null|\BackedEnum $navigationIcon = 'heroicon-o-bars-3';
 
     protected static bool $showTimestamps = true;
 
@@ -37,10 +42,10 @@ class NavigationResource extends Resource
         static::$showTimestamps = ! $condition;
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Section::make('')->schema([
                     TextInput::make('name')
                         ->label(__('filament-navigation::filament-navigation.attributes.name'))
@@ -73,15 +78,7 @@ class NavigationResource extends Resource
                             ->unique(column: 'handle', ignoreRecord: true),
                         View::make('filament-navigation::card-divider')
                             ->visible(static::$showTimestamps),
-                        Placeholder::make('created_at')
-                            ->label(__('filament-navigation::filament-navigation.attributes.created_at'))
-                            ->visible(static::$showTimestamps)
-                            ->content(fn (?Navigation $record) => $record ? $record->created_at->translatedFormat(Table::$defaultDateTimeDisplayFormat) : new HtmlString('&mdash;')),
-                        Placeholder::make('updated_at')
-                            ->label(__('filament-navigation::filament-navigation.attributes.updated_at'))
-                            ->visible(static::$showTimestamps)
-                            ->content(fn (?Navigation $record) => $record ? $record->updated_at->translatedFormat(Table::$defaultDateTimeDisplayFormat) : new HtmlString('&mdash;')),
-                    ]),
+                         ]),
                 ])
                     ->columnSpan([
                         12,
@@ -91,9 +88,9 @@ class NavigationResource extends Resource
             ->columns(12);
     }
 
-    public static function navigationLabel(?string $string): void
+    public static function navigationLabel(?string $label): void
     {
-        self::$workNavigationLabel = $string;
+        self::$workNavigationLabel = $label;
     }
 
     public static function pluralLabel(?string $string): void
@@ -140,7 +137,7 @@ class NavigationResource extends Resource
                     ->dateTime()
                     ->sortable(),
             ])
-            ->actions([
+            ->recordActions([
                 EditAction::make()
                     ->icon(null),
                 DeleteAction::make()

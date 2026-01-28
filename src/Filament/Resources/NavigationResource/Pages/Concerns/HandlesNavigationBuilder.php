@@ -3,12 +3,13 @@
 namespace RyanChandler\FilamentNavigation\Filament\Resources\NavigationResource\Pages\Concerns;
 
 use Filament\Actions\Action;
-use Filament\Forms\ComponentContainer;
-use Filament\Forms\Components\Component;
-use Filament\Forms\Components\Group;
+use Filament\Schemas\Components\Component;
+use Filament\Schemas\Components\Group;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Get;
+
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Schema;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use RyanChandler\FilamentNavigation\FilamentNavigation;
@@ -73,7 +74,7 @@ trait HandlesNavigationBuilder
     {
         return [
             Action::make('item')
-                ->mountUsing(function (ComponentContainer $form) {
+                ->mountUsing(function (Schema $form) {
                     if (! $this->mountedItem) {
                         return;
                     }
