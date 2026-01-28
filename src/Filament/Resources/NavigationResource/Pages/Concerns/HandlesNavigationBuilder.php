@@ -3,15 +3,12 @@
 namespace RyanChandler\FilamentNavigation\Filament\Resources\NavigationResource\Pages\Concerns;
 
 use Filament\Actions\Action;
-
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-
-
 use Filament\Schemas\Components\Component;
-use Filament\Schemas\Components\Form;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Schema;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use RyanChandler\FilamentNavigation\FilamentNavigation;
@@ -76,7 +73,7 @@ trait HandlesNavigationBuilder
     {
         return [
             Action::make('item')
-                ->mountUsing(function (Form $form) {
+                ->mountUsing(function (Schema $form) {
                     if (! $this->mountedItem) {
                         return;
                     }
@@ -84,7 +81,47 @@ trait HandlesNavigationBuilder
                     $form->fill($this->mountedItemData);
                 })
                 ->view('filament-navigation::hidden-action')
-                ->schema([])
+                ->form([
+                    TextInput::make('label')
+                        ->label(__('filament-navigation::filament-navigation.items-modal.label'))
+                        ->required(),
+                    Select::make('type')
+                        ->label(__('filament-navigation::filament-navigation.items-modal.type'))
+                        ->options(function () {
+                            $types = FilamentNavigation::get()->getItemTypes();
+
+                            return array_combine(array_keys($types), Arr::pluck($types, 'name'));
+                        })
+                        ->afterStateUpdated(function ($state, Select $component): void {
+                            if (! $state) {
+                                return;
+                            }
+
+                            // NOTE: This chunk of code is a workaround for Livewire not letting
+                            //       you entangle to non-existent array keys, which wire:model
+                            //       would normally let you do.
+                            $component
+                                ->getContainer()
+                                ->getComponent(fn (Component $component) => $component instanceof Group)
+                                ->getChildSchema()
+                                ->fill();
+                        })
+                        ->reactive(),
+                    Group::make()
+                        ->statePath('data')
+                        ->whenTruthy('type')
+                        ->schema(function (Get $get) {
+                            $type = $get('type');
+
+                            return FilamentNavigation::get()->getItemTypes()[$type]['fields'] ?? [];
+                        }),
+                    Group::make()
+                        ->statePath('data')
+                        ->visible(fn (Component $component) => $component->evaluate(FilamentNavigation::get()->getExtraFields()) !== [])
+                        ->schema(function (Component $component) {
+                            return FilamentNavigation::get()->getExtraFields();
+                        }),
+                ])
                 ->modalWidth('md')
                 ->action(function (array $data) {
                     if ($this->mountedItem) {
@@ -112,7 +149,7 @@ trait HandlesNavigationBuilder
 
                     $this->mountedActionData = [];
                 })
-                ->modalSubmitActionLabel(__('filament-navigation::filament-navigation.items-modal.btn'))
+                ->modalButton(__('filament-navigation::filament-navigation.items-modal.btn'))
                 ->label(__('filament-navigation::filament-navigation.items-modal.title')),
         ];
     }
